@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  web:
+    container_name: web
+    image: 127.0.0.1:5000/stackdemo
+    build: .
+    ports:
+      - "8000:8000"
+  redis:
+    image: redis:alpine
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v2.14.0
+    volumes:
+        - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+        - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+        - '9090:9090'
+  node-exporter:
+    container_name: node-exporter
+    image: prom/node-exporter:v0.18.1
+    ports:
+        - '9100:9100'
+  grafana:
+    image: grafana/grafana:6.3.7
+    volumes:
+            #    - grafana_data:/var/lib/grafana
+        - ./grafana/provisioning/:/etc/grafana/provisioning/
+    
+    environment:
+        - GF_SECURITY_ADMIN_PASSWORD=pass
+    depends_on:
+        - prometheus
+    ports:
+        - "3000:3000"
+  cadvisor:
+    image: google/cadvisor:v0.29.0
+    ports:
+        - "8080:8080"
+    volumes:
+        - /:/rootfs:ro
+        - /var/run:/var/run:rw
+        - /sys:/sys:ro
+        - /var/lib/docker/:/var/lib/docker:ro
